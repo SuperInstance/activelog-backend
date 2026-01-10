@@ -1,0 +1,4 @@
+{"op":"FOCUS","title":"Chrome"}
+{"op":"WAIT","ms":500}
+{"op":"SCREENSHOT","path":".\\agent\\outbox\\initial.png"}
+{"op":"PAUSE","reason":"demo approval"}

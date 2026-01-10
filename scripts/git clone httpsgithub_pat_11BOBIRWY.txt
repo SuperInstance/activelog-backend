@@ -1,0 +1,1 @@
+git clone https://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@github.com/ctothed/DMLog-AI.git /opt/dmlog

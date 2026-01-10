@@ -1,0 +1,66 @@
+version: "3.9"
+
+services:
+  activelog-db:
+    image: postgres:15.4
+    container_name: activelog-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: activelog
+      POSTGRES_PASSWORD: activelog
+      POSTGRES_DB: activelog
+    volumes:
+      - activelog-backend_db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U activelog"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  activelog-api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: activelog-api
+    restart: unless-stopped
+    depends_on:
+      activelog-db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgres://activelog:activelog@activelog-db:5432/activelog
+    healthcheck:
+      # -f (fail on non-200), -s (silent), -S (show errors)
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  activelog-worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    container_name: activelog-worker
+    restart: unless-stopped
+    depends_on:
+      activelog-api:
+        condition: service_healthy
+    environment:
+      API_URL: http://activelog-api:8000
+    healthcheck:
+      test: ["CMD-SHELL", "echo healthy"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  activelog-backend_db_data:
+
+networks:
+  default:
+    name: activelog-backend_default
